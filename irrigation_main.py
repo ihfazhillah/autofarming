@@ -83,7 +83,7 @@ def get_pump_length():
         with open("pump_length", "r") as f:
             return int(f.read())
     except OSError:
-        return 15
+        return 60
 
 
 def set_pump_length(value):
@@ -129,7 +129,7 @@ def get_schedules():
 v_meter = VoltMeter(26)
 pump = Pin(0, Pin.OUT, value=1)
 mixer = Pin(1, Pin.OUT, value=1)
-btn = Pin(2, Pin.IN, Pin.PULL_DOWN)
+led = Pin("LED", Pin.OUT)
 
 feeding_run = False
 def run_pump():
@@ -187,15 +187,17 @@ def notify_battery(client):
 connect()
 try:
     client = mqtt_connect()
+    led.on()
 except OSError:
     reconnect()
 
-btn.irq(handler=on_btn_pressed, trigger=Pin.IRQ_RISING)
+# btn.irq(handler=on_btn_pressed, trigger=Pin.IRQ_RISING)
 
 rtc = RTC()
 
 while True:
     try:
+        client.subscribe("#")
         (year, month, day, weekday, hours, minutes, seconds, subseconds) = rtc.datetime()
 
         for schedule, tm in schedules.items():
