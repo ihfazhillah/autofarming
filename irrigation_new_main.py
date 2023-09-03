@@ -3,6 +3,7 @@ from irrigation.mymqtt import MyMQTT
 from irrigation.time_helper import set_time
 from irrigation.volt_meter import VoltMeter, Battery
 from irrigation.wifi import connect
+from irrigation.notifier import Notifier, pop_pending_notification
 
 import time
 
@@ -23,18 +24,6 @@ mqtt_client = MQTTClient(
     settings.MQTT_PASSWORD,
     keepalive=3600
 )
-
-class Notifier:
-    """Schedule notifier"""
-    def __init__(self, client, settings):
-        self.client = client
-        self.topic = f"place/{settings.PLACE_ID}/controller/{settings.CONTROLLER_TOKEN}"
-
-    def notify(self, index=None, fn_name=None):
-        topic = self.topic + f"/{fn_name}"
-        idx = str(index) if index else ""
-
-        self.client.publish(topic, idx)
 
 pump_pin = Pin(0, Pin.OUT, value=1)
 pump = Pump(pump_pin)
@@ -64,8 +53,13 @@ internal_led = Pin("LED", Pin.OUT)
 no_connection_led = Pin(15, Pin.OUT)
 
 
+def feeding_handler(msg):
+    feed.run_feed()
+    notifier.notify(None, "feeding")
+
+
 schedule = Schedule(notifier, settings)
-schedule.add_handler("feeding", feed.run_feed)
+schedule.add_handler("feeding", feeding_handler)
 my_mqtt.register("set-schedule-1", lambda msg: schedule.set_schedule(1, msg, "feeding"))
 my_mqtt.register("set-schedule-2", lambda msg: schedule.set_schedule(2, msg, "feeding"))
 my_mqtt.register("set-schedule-3", lambda msg: schedule.set_schedule(3, msg, "feeding"))
@@ -117,6 +111,14 @@ while True:
         no_connection()
 
     battery.notify()
+
+    # handle pending notifications
+    # why one by one each seconds? To prevent blocking loop if
+    # we have no connection
+    pending_notification = pop_pending_notification()
+    if pending_notification:
+        idx, fn_name = pending_notification.split(";")
+        notifier.notify(idx, fn_name)
 
     if not connected:
         connect(settings.WIFI_USERNAME, settings.WIFI_PASSWORD)
