@@ -9,11 +9,13 @@ default_schedules = [
 
 
 def get_schedules():
+    print("get schedules")
     try:
         with open("schedules", "r") as f:
             lines = f.readlines()
             return [line.strip() for line in lines]
     except OSError:
+        print("error")
         return default_schedules
 
 

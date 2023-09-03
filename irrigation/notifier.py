@@ -9,8 +9,10 @@ class Notifier:
         idx = str(index) if index else ""
 
         try:
+            print("publishing")
             self.client.publish(topic, idx)
         except Exception:
+            print("exception in publishing")
             set_pending_notification(idx, fn_name)
 
 

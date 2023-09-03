@@ -7,10 +7,7 @@ from irrigation.notifier import Notifier, pop_pending_notification
 
 import time
 
-import machine
 from machine import Pin, ADC, RTC
-import network
-import ntptime
 import settings
 from umqtt.simple import MQTTClient
 
@@ -33,8 +30,13 @@ mixer = Mixer(mixer_pin)
 
 feed = Feed(pump, mixer)
 
+def feeding_handler(msg):
+    feed.run_feed()
+    notifier.notify(None, "feeding")
+
+
 my_mqtt = MyMQTT(mqtt_client, settings)
-my_mqtt.register("run-feed", lambda msg: feed.run_feed())
+my_mqtt.register("run-feed", feeding_handler)
 my_mqtt.register("set-mixer-length", mixer.set_length)
 my_mqtt.register("set-pump-length", pump.set_length)
 
@@ -53,13 +55,9 @@ internal_led = Pin("LED", Pin.OUT)
 no_connection_led = Pin(15, Pin.OUT)
 
 
-def feeding_handler(msg):
-    feed.run_feed()
-    notifier.notify(None, "feeding")
-
-
 schedule = Schedule(notifier, settings)
-schedule.add_handler("feeding", feeding_handler)
+schedule.add_handler("feeding", feed.run_feed)
+
 my_mqtt.register("set-schedule-1", lambda msg: schedule.set_schedule(1, msg, "feeding"))
 my_mqtt.register("set-schedule-2", lambda msg: schedule.set_schedule(2, msg, "feeding"))
 my_mqtt.register("set-schedule-3", lambda msg: schedule.set_schedule(3, msg, "feeding"))
