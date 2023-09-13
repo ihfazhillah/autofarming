@@ -61,6 +61,10 @@ class Schedule:
         for s_index, schedule in enumerate(schedules):
             tm, fn_name = schedule.split(";")
             s_hour, s_minute = tm.split(":")
-            if int(s_hour) - self.settings.TZ_DELTA == hours and int(s_minute) == minutes:
+
+            utc_hour = int(s_hour) - self.settings.TZ_DELTA
+            if utc_hour < 0:
+                utc_hour = 24 + utc_hour
+            if utc_hour == hours and int(s_minute) == minutes:
                 self.handlers[fn_name]()
                 self.notifier.notify(s_index + 1, fn_name)
