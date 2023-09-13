@@ -1,4 +1,5 @@
 import time
+import machine
 
 
 class Pump:
@@ -70,9 +71,12 @@ class Feed:
 
         self.is_running = True
         self.mixer.on()
-        time.sleep(self.mixer.get_length())
-        self.pump.on()
-        time.sleep(self.pump.get_length())
-        self.pump.off()
-        self.mixer.off()
-        self.is_running = False
+
+        machine.Timer(period=self.mixer.get_length(), mode=machine.Timer.ONE_SHOT, callback=lambda t: self.pump.on())
+
+        def off(t):
+            self.pump.off()
+            self.mixer.off()
+            self.is_running = False
+
+        machine.Timer(period=self.mixer.get_length + self.pump.get_length(), mode=machine.Timer.ONE_SHOT, callback=off)
