@@ -1,2 +1,2 @@
-# irigation-system
-programmable irrigation system
+# autofarming
+Automation for farming
