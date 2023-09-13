@@ -19,7 +19,7 @@ class Battery:
         self.topic = f"controller/{settings.CONTROLLER_TOKEN}/{settings.BATTERY_DEVICE_ID}"
 
     def notify(self):
-        if time.time() - self.latest_time > 60 * 5:
+        if time.time() - self.latest_time > 60 * 1:
             try:
                 self.client.publish(self.topic, str(self.battery.read()))
             except:
