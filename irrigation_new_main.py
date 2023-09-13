@@ -58,6 +58,14 @@ no_connection_led = Pin(15, Pin.OUT)
 schedule = Schedule(notifier, settings)
 schedule.add_handler("feeding", feed.run_feed)
 
+
+def handle_schedule(msg):
+    index, time, fn_name = msg.split(";")
+    schedule.set_schedule(int(index), time, fn_name)
+
+my_mqtt.register("set-schedule", handle_schedule)
+
+# old functions
 my_mqtt.register("set-schedule-1", lambda msg: schedule.set_schedule(1, msg, "feeding"))
 my_mqtt.register("set-schedule-2", lambda msg: schedule.set_schedule(2, msg, "feeding"))
 my_mqtt.register("set-schedule-3", lambda msg: schedule.set_schedule(3, msg, "feeding"))
