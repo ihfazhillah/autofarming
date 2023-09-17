@@ -72,11 +72,16 @@ class Feed:
         self.is_running = True
         self.mixer.on()
 
-        machine.Timer(period=self.mixer.get_length(), mode=machine.Timer.ONE_SHOT, callback=lambda t: self.pump.on())
+        timer = machine.Timer()
 
         def off(t):
             self.pump.off()
             self.mixer.off()
             self.is_running = False
 
-        machine.Timer(period=self.mixer.get_length + self.pump.get_length(), mode=machine.Timer.ONE_SHOT, callback=off)
+
+        def second(t):
+            self.pump.on()
+            timer.init(period=self.pump.get_length() * 1000, mode=machine.Timer.ONE_SHOT, callback=off)
+
+        timer.init(period=self.mixer.get_length() * 1000, mode=machine.Timer.ONE_SHOT, callback=second)
