@@ -66,6 +66,7 @@ class Feed:
         self.is_running = False
 
     def run_feed(self):
+        """We should use the calculation here instead of relying into timer function"""
         if self.is_running:
             return
 
